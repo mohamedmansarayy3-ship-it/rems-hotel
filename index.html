@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>REMS HOTEL</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- SEO -->
+<meta name="description" content="REMS HOTEL offers luxury rooms, modern comfort, and personalized hospitality near University of Sierra Leone – IPAM, Freetown.">
+<meta name="theme-color" content="#0b1c33">
+<link rel="icon" href="favicon.ico">
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+<!-- Structured Data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Hotel",
+  "name": "REMS HOTEL",
+  "description": "Luxury and comfort near University of Sierra Leone – IPAM.",
+  "address": {
+    "@type": "PostalAddress",
+    "addressLocality": "Freetown",
+    "addressCountry": "SL"
+  },
+  "telephone": "+23233503686",
+  "email": "mansaraym246@gmail.com",
+  "priceRange": "$$"
+}
+</script>
+
+<style>
+:root{
+  --blue:#0b1c33;
+  --gold:#d4af37;
+  --white:#ffffff;
+}
+
+/* RESET */
+*{margin:0;padding:0;box-sizing:border-box}
+
+body{
+  font-family:"Inter",sans-serif;
+  background:
+    linear-gradient(rgba(3,8,18,.55),rgba(3,8,18,.65)),
+    url("./Rems.png") center/cover no-repeat fixed;
+  color:#fff;
+  min-height:100vh;
+}
+
+/* HEADER */
+.lux-header{
+  position:fixed;
+  top:0;
+  width:100%;
+  z-index:1000;
+  background:rgba(7,15,28,.85);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+
+.lux-container{
+  max-width:1300px;
+  margin:auto;
+  height:70px;
+  padding:0 24px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+
+.lux-logo{
+  font-weight:700;
+  line-height:1.1;
+}
+.brand-accent{
+  font-family:"Playfair Display",serif;
+  color:var(--gold);
+}
+
+/* NAV */
+.lux-nav ul{
+  list-style:none;
+  display:flex;
+  gap:18px;
+}
+.lux-nav a{
+  color:#fff;
+  text-decoration:none;
+  font-size:14px;
+  padding:8px 12px;
+  border-radius:8px;
+}
+.lux-nav a:hover{color:var(--gold);background:rgba(255,255,255,.06)}
+
+.menu-btn{
+  display:none;
+  background:none;
+  color:#fff;
+  font-size:22px;
+  border:none;
+}
+
+/* HERO */
+.hero-space{
+  height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding-top:70px;
+}
+.hero-text h2{
+  font-family:"Playfair Display",serif;
+  font-size:46px;
+}
+.hero-text p{
+  margin-top:10px;
+  font-size:18px;
+  opacity:.9;
+}
+
+/* SECTIONS */
+section{
+  padding:90px 20px;
+  background:#fff;
+  color:#111;
+}
+h2{
+  text-align:center;
+  font-family:"Playfair Display",serif;
+  color:var(--gold);
+  margin-bottom:18px;
+}
+.section-intro{
+  text-align:center;
+  max-width:800px;
+  margin:0 auto 40px;
+  color:#555;
+}
+
+.explore-btn{
+  display:inline-block;
+  padding:12px 22px;
+  background:var(--blue);
+  color:#fff;
+  border-radius:8px;
+  text-decoration:none;
+}
+.explore-btn:hover{background:var(--gold);color:#000}
+
+/* CARDS */
+.rooms-info{
+  max-width:900px;
+  margin:auto;
+  display:grid;
+  gap:25px;
+}
+.info-box{
+  padding:28px;
+  border-radius:14px;
+  border:1px solid #eee;
+  box-shadow:0 8px 20px rgba(0,0,0,.06);
+}
+
+/* FOOTER */
+footer{
+  background:var(--blue);
+  color:#ccc;
+  padding:60px 20px;
+}
+.footer-grid{
+  max-width:1200px;
+  margin:auto;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:30px;
+}
+footer h4{color:#fff}
+footer a{color:#ccc;text-decoration:none}
+footer a:hover{color:var(--gold)}
+.copy{text-align:center;margin-top:30px;font-size:12px}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .lux-nav{display:none}
+  .menu-btn{display:block}
+  .hero-text h2{font-size:34px}
+}
+</style>
+</head>
+
+<body>
+
+<header class="lux-header">
+  <div class="lux-container">
+    <div class="lux-logo">
+      <span class="brand-accent">REMS</span><br>
+      <small>HOTEL · Life Style & Comfort</small>
+    </div>
+
+    <nav class="lux-nav">
+      <ul>
+        <li><a href="home.html">Rooms</a></li>
+        <li><a href="#">Facilities</a></li>
+        <li><a href="admin.html">Admin</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </nav>
+
+    <a class="explore-btn" href="home.html">Book Now</a>
+  </div>
+</header>
+
+<div class="hero-space">
+  <div class="hero-text">
+    <h2>Luxury Redefined</h2>
+    <p>Premium comfort & modern hospitality at REMS HOTEL</p>
+  </div>
+</div>
+
+<section id="rooms">
+  <h2>Explore Our Rooms</h2>
+  <p class="section-intro">
+    Elegantly designed rooms crafted for comfort, privacy, and refined luxury.
+  </p>
+
+  <div class="rooms-info">
+    <div class="info-box">
+      <h3>Luxury Stay Experience</h3>
+      <p>Plush bedding, modern interiors, high-speed Wi-Fi, smart TVs, and daily housekeeping.</p>
+    </div>
+
+    <div class="info-box">
+      <h3>Peace & Comfort</h3>
+      <p>Calm surroundings ideal for business, study, or relaxation with flexible services.</p>
+    </div>
+  </div>
+</section>
+
+<footer id="contact">
+  <div class="footer-grid">
+    <div>
+      <h4>REMS HOTEL</h4>
+      <p>Luxury and comfort, redefined.</p>
+    </div>
+    <div>
+      <h4>Contact</h4>
+      <p>Freetown, Sierra Leone</p>
+      <p>+232 33 503 686</p>
+      <p>mansaraym246@gmail.com</p>
+    </div>
+  </div>
+  <div class="copy">© 2026 REMS HOTEL · All Rights Reserved</div>
+</footer>
+
+</body>
+</html>
