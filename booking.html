@@ -144,18 +144,18 @@
   async function resolveApiBase(){
     if (_apiBase !== null) return _apiBase;
     const candidates = [
-      '/api/bookings/availability',
-      'http://127.0.0.1:3000/api/bookings/availability',
-      'http://127.0.0.1:5000/api/bookings/availability',
-      'http://localhost:3000/api/bookings/availability',
-      'http://localhost:5000/api/bookings/availability'
+      '/api/booking/availability',
+      'http://127.0.0.1:3000/api/booking/availability',
+      'http://127.0.0.1:5000/api/booking/availability',
+      'http://localhost:3000/api/booking/availability',
+      'http://localhost:5000/api/booking/availability'
     ];
     for (const c of candidates){
       try{
         const ok = await probe(c, 800);
         if (ok){
-          // strip the trailing '/api/bookings/availability' to return base
-          _apiBase = c.replace(/\/api\/bookings\/availability$/, '');
+          // strip the trailing '/api/booking/availability' to return base
+          _apiBase = c.replace(/\/api\/booking\/availability$/, '');
           return _apiBase;
         }
       }catch(e){}
@@ -232,7 +232,7 @@
 
       // If backend available, create a provisional booking
       if (base) {
-        const resp = await fetch((base.endsWith('/')? base.slice(0,-1): base) + '/api/bookings/provisional', {
+        const resp = await fetch((base.endsWith('/')? base.slice(0,-1): base) + '/api/booking/provisional', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
