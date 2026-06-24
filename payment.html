@@ -171,7 +171,7 @@ async function resolveApiBase(){
   ];
 
   for (const base of candidates){
-    const test = (base === '') ? '/api/bookings' : (base + '/api/bookings');
+    const test = (base === '') ? '/api/booking' : (base + '/api/booking');
     try{
       const ok = await probeUrl(test);
       if (ok) { _resolvedApiBase = base; console.log('Using API base:', base || '(same-origin)'); return base; }
@@ -327,12 +327,12 @@ async function pay() {
     // build a safe endpoint: use API_BASE if provided, otherwise use location.origin
     let endpoint;
     if (API_BASE) {
-      endpoint = API_BASE.replace(/\/$/, '') + '/api/bookings';
+      endpoint = API_BASE.replace(/\/$/, '') + '/api/booking';
     } else {
       if (location.protocol === 'file:') {
         throw new Error('Cannot contact API when the page is opened via file://. Serve the site over http:// (live-server or similar).');
       }
-      endpoint = location.origin.replace(/\/$/, '') + '/api/bookings';
+      endpoint = location.origin.replace(/\/$/, '') + '/api/booking';
     }
 
     // If bank receipt uploaded, use FormData
@@ -385,7 +385,7 @@ async function pay() {
 
     // Also append booking to localStorage "bookings" so admin.html can read it.
     try {
-      const existing = JSON.parse(localStorage.getItem('bookings') || '[]');
+      const existing = JSON.parse(localStorage.getItem('booking') || '[]');
       const record = {
         id: savedBooking.id,
         timestamp: new Date().toISOString(),
@@ -399,9 +399,9 @@ async function pay() {
         raw: data
       };
       existing.push(record);
-      localStorage.setItem('bookings', JSON.stringify(existing));
+      localStorage.setItem('booking', JSON.stringify(existing));
       // notify other tabs/pages
-      localStorage.setItem('bookings_updated', String(Date.now()));
+      localStorage.setItem('booking_updated', String(Date.now()));
     } catch (e) {
       console.warn('Failed to persist booking to localStorage', e);
     }
