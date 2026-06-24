@@ -145,9 +145,6 @@ Account No: <b>123456789</b><br><br>
 </div>
 
 <script>
-/* ================= BACKEND URL ================= */
-const API_ENDPOINT = "https://groupsixy3.remshotelgroupsix.workers.dev/api/booking";
-
 /* ================= LOAD BOOKING DATA ================= */
 let stored = sessionStorage.getItem("bookingData");
 if (!stored) {
@@ -216,7 +213,7 @@ method.addEventListener("change", () => {
 });
 
 /* ================= PAYMENT SUBMIT ================= */
-async function pay() {
+function pay() {
   if (!method.value) {
     alert("Select payment method");
     return;
@@ -235,8 +232,7 @@ async function pay() {
       return;
     }
     const file = bankReceipt.files[0];
-    const maxBytes = 5 * 1024 * 1024;
-    if (file.size > maxBytes) {
+    if (file.size > 5 * 1024 * 1024) {
       alert("Receipt file must be 5MB or smaller.");
       restoreButton();
       return;
@@ -277,94 +273,41 @@ async function pay() {
     data.transactionId = qmoneyTxn.value.trim();
   }
 
-  /* ===== SEND TO CLOUDFLARE WORKER BACKEND ===== */
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000); // 15s
-
+  /* ===== SAVE TO localStorage — no backend needed ===== */
   try {
-    let res;
+    const bookingId = 'BK-' + Date.now() + '-' + Math.floor(Math.random() * 10000);
 
-    if (method.value === "bank" && bankReceipt.files[0]) {
-      // multipart for bank receipt file upload
-      const form = new FormData();
-      form.append("bankReceipt", bankReceipt.files[0]);
-      form.append("data", JSON.stringify(data));
-      res = await fetch(API_ENDPOINT, {
-        method: "POST",
-        body: form,
-        signal: controller.signal
-      });
-    } else {
-      res = await fetch(API_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-        signal: controller.signal
-      });
-    }
+    const existing = JSON.parse(localStorage.getItem('booking') || '[]');
+    const record = {
+      id:                  bookingId,
+      timestamp:           new Date().toISOString(),
+      room:                data.room          || data.roomName || '',
+      roomNumber:          data.number        || data.roomId   || '',
+      name:                data.name          || '',
+      email:               data.email         || '',
+      phone:               data.phone         || '',
+      totalAmount:         data.totalAmount   || data.amount   || 0,
+      paymentMethod:       data.paymentMethod || '',
+      transactionId:       data.transactionId || '',
+      bankReceiptUploaded: data.bankReceiptUploaded || false,
+      checkin:             data.checkin       || '',
+      checkout:            data.checkout      || '',
+      raw:                 data
+    };
+    existing.push(record);
+    localStorage.setItem('booking', JSON.stringify(existing));
+    localStorage.setItem('booking_updated', String(Date.now()));
 
-    clearTimeout(timeout);
-
-    if (!res.ok) {
-      const errText = await res.text().catch(() => res.statusText || String(res.status));
-      alert("Payment submission failed: " + (errText || res.status));
-      restoreButton();
-      return;
-    }
-
-    let savedBooking = null;
-    try {
-      savedBooking = await res.json();
-    } catch (e) {
-      savedBooking = { id: null };
-    }
-
-    if (!savedBooking || !savedBooking.id) {
-      alert("Payment submitted but server did not return a booking id. Contact support.");
-      restoreButton();
-      return;
-    }
-
-    // persist and show success
     sessionStorage.removeItem("bookingData");
-    sessionStorage.setItem("bookingId", String(savedBooking.id));
+    sessionStorage.setItem("bookingId", bookingId);
 
-    // Also save to localStorage so admin.html can read it
-    try {
-      const existing = JSON.parse(localStorage.getItem('booking') || '[]');
-      const record = {
-        id:            savedBooking.id,
-        timestamp:     new Date().toISOString(),
-        room:          data.room          || data.roomName || '',
-        roomNumber:    data.number        || data.roomId   || '',
-        name:          data.name          || '',
-        email:         data.email         || '',
-        phone:         data.phone         || '',
-        totalAmount:   data.totalAmount   || data.amount   || 0,
-        paymentMethod: data.paymentMethod || '',
-        transactionId: data.transactionId || '',
-        bankReceiptUploaded: data.bankReceiptUploaded || false,
-        raw: data
-      };
-      existing.push(record);
-      localStorage.setItem('booking', JSON.stringify(existing));
-      localStorage.setItem('booking_updated', String(Date.now()));
-    } catch (e) {
-      console.warn('Failed to persist booking to localStorage', e);
-    }
-
-    status.textContent = "✅ Payment submitted successfully.";
+    status.textContent = "✅ Payment submitted successfully! Booking ID: " + bookingId;
     payBtn.textContent = "Submitted";
     payBtn.disabled    = true;
 
   } catch (err) {
-    clearTimeout(timeout);
-    if (err.name === "AbortError") {
-      alert("Request timed out. Please try again.");
-    } else {
-      console.error('Payment submit error:', err);
-      alert("Network error while submitting payment: " + (err.message || String(err)) + ". Please try again.");
-    }
+    console.error('Payment save error:', err);
+    alert("Could not save payment: " + (err.message || String(err)));
     restoreButton();
   }
 }
