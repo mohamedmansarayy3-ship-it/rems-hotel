@@ -213,7 +213,7 @@ method.addEventListener("change", () => {
 });
 
 /* ================= PAYMENT SUBMIT ================= */
-function pay() {
+  async function pay() {
   if (!method.value) {
     alert("Select payment method");
     return;
