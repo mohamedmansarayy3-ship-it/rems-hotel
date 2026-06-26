@@ -1,60 +1,71 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Payment | REMS HOTEL</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-body{font-family:Arial;background:#f4f6f8;padding:20px}
-.container{max-width:600px;margin:auto;background:#fff;padding:20px;border-radius:8px}
-button,select,input{width:100%;padding:10px;margin-top:10px}
-.success{color:green}
-.error{color:red}
-</style>
-</head>
-
-<body>
-<div class="container">
-  <h2>Confirm Payment</h2>
-
-  <select id="method">
-    <option value="">Select payment method</option>
-    <option value="bank">Bank</option>
-    <option value="afrimoney">Afrimoney</option>
-    <option value="orange">Orange Money</option>
-    <option value="qmoney">QMoney</option>
-  </select>
-
-  <input id="txn" placeholder="Transaction ID (if any)" />
-
-  <button onclick="pay()">Send Payment</button>
-
-  <p id="status"></p>
-</div>
-
 <script>
-async function pay() {
-  const status = document.getElementById("status");
-  const method = document.getElementById("method").value;
-  const txn = document.getElementById("txn").value.trim();
+/* ================= LOAD BOOKING DATA ================= */
+const stored = sessionStorage.getItem("bookingData");
+if (!stored) {
+  alert("Booking session expired. Please book again.");
+  location.href = "booking.html";
+  throw new Error("No bookingData");
+}
+const data = JSON.parse(stored);
 
-  if (!method) {
+/* ================= ELEMENTS ================= */
+const method = document.getElementById("method");
+const bank = document.getElementById("bank");
+const afri = document.getElementById("afri");
+const orange = document.getElementById("orange");
+const qmoney = document.getElementById("qmoney");
+
+const bankReceipt = document.getElementById("bankReceipt");
+const afriTxn = document.getElementById("afriTxn");
+const orangeTxn = document.getElementById("orangeTxn");
+const qmoneyTxn = document.getElementById("qmoneyTxn");
+
+const status = document.getElementById("status");
+const payBtn = document.getElementById("payBtn");
+
+/* ================= SWITCH PAYMENT UI ================= */
+method.addEventListener("change", () => {
+  bank.classList.add("hidden");
+  afri.classList.add("hidden");
+  orange.classList.add("hidden");
+  qmoney.classList.add("hidden");
+
+  if (method.value === "bank") bank.classList.remove("hidden");
+  if (method.value === "afrimoney") afri.classList.remove("hidden");
+  if (method.value === "orange") orange.classList.remove("hidden");
+  if (method.value === "qmoney") qmoney.classList.remove("hidden");
+});
+
+/* ================= PAYMENT SUBMIT ================= */
+async function pay() {
+  if (!method.value) {
     alert("Select payment method");
     return;
   }
 
-  const stored = sessionStorage.getItem("bookingData");
-  if (!stored) {
-    alert("Booking expired");
-    return;
+  payBtn.disabled = true;
+  payBtn.textContent = "Submitting...";
+  status.textContent = "";
+
+  let transactionId = null;
+
+  if (method.value === "afrimoney") {
+    if (!afriTxn.value.trim()) return fail("Enter Afrimoney Transaction ID");
+    transactionId = afriTxn.value.trim();
   }
 
-  const data = JSON.parse(stored);
+  if (method.value === "orange") {
+    if (!orangeTxn.value.trim()) return fail("Enter Orange Money Transaction ID");
+    transactionId = orangeTxn.value.trim();
+  }
 
-  status.textContent = "Submitting payment...";
+  if (method.value === "qmoney") {
+    if (!qmoneyTxn.value.trim()) return fail("Enter QMoney Transaction ID");
+    transactionId = qmoneyTxn.value.trim();
+  }
 
   try {
-    const res = await fetch(
+    const response = await fetch(
       "https://macbookair.remshotelgroupsix.workers.dev/api/booking",
       {
         method: "POST",
@@ -68,27 +79,36 @@ async function pay() {
           checkin: data.checkin,
           checkout: data.checkout,
           totalAmount: data.totalAmount,
-          paymentMethod: method,
-          transactionId: txn || null
+          paymentMethod: method.value,
+          transactionId
         })
       }
     );
 
-    const result = await res.json();
-
-    if (!res.ok || !result.success) {
-      throw new Error("Server rejected request");
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(text || "Server error");
     }
 
-    status.textContent = "✅ Payment successful";
+    const result = await response.json();
+
+    status.textContent = "✅ Payment submitted successfully";
     status.className = "success";
+    payBtn.textContent = "Submitted";
+
+    sessionStorage.removeItem("bookingData");
 
   } catch (err) {
     console.error(err);
-    status.textContent = "❌ Payment failed";
-    status.className = "error";
+    fail("Payment failed: Network or server error");
   }
 }
+
+/* ================= HELPERS ================= */
+function fail(msg) {
+  alert(msg);
+  status.textContent = "❌ " + msg;
+  payBtn.disabled = false;
+  payBtn.textContent = "Confirm & Send Payment";
+}
 </script>
-</body>
-</html>
