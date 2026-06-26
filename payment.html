@@ -4,62 +4,54 @@
 <meta charset="UTF-8">
 <title>Payment | REMS HOTEL</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <style>
 body{font-family:Arial;background:#f4f6f8;padding:20px}
-.container{max-width:600px;margin:auto;background:#fff;padding:25px;border-radius:10px}
-label{font-weight:bold;display:block;margin-top:10px}
-input,button{width:100%;padding:10px;margin-top:8px}
-button{background:#0a7cff;color:#fff;border:none;cursor:pointer}
-button:hover{opacity:0.9}
-#status{margin-top:15px;font-weight:bold;text-align:center}
+.container{max-width:600px;margin:auto;background:#fff;padding:20px;border-radius:8px}
+button,select,input{width:100%;padding:10px;margin-top:10px}
+.success{color:green}
+.error{color:red}
 </style>
 </head>
 
 <body>
-
 <div class="container">
-<h2>Hotel Booking Payment</h2>
+  <h2>Confirm Payment</h2>
 
-<form id="paymentForm">
-  <label>Full Name</label>
-  <input type="text" id="name" required>
+  <select id="method">
+    <option value="">Select payment method</option>
+    <option value="bank">Bank</option>
+    <option value="afrimoney">Afrimoney</option>
+    <option value="orange">Orange Money</option>
+    <option value="qmoney">QMoney</option>
+  </select>
 
-  <label>Email</label>
-  <input type="email" id="email" required>
+  <input id="txn" placeholder="Transaction ID (if any)" />
 
-  <label>Room Type</label>
-  <input type="text" id="room_type" required>
+  <button onclick="pay()">Send Payment</button>
 
-  <label>Check-in</label>
-  <input type="date" id="check_in" required>
-
-  <label>Check-out</label>
-  <input type="date" id="check_out" required>
-
-  <button type="submit">Confirm Payment</button>
-</form>
-
-<p id="status"></p>
+  <p id="status"></p>
 </div>
 
 <script>
-const form = document.getElementById("paymentForm");
-const statusText = document.getElementById("status");
+async function pay() {
+  const status = document.getElementById("status");
+  const method = document.getElementById("method").value;
+  const txn = document.getElementById("txn").value.trim();
 
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
+  if (!method) {
+    alert("Select payment method");
+    return;
+  }
 
-  statusText.textContent = "Processing payment...";
-  statusText.style.color = "black";
+  const stored = sessionStorage.getItem("bookingData");
+  if (!stored) {
+    alert("Booking expired");
+    return;
+  }
 
-  const payload = {
-    name: document.getElementById("name").value.trim(),
-    email: document.getElementById("email").value.trim(),
-    room_type: document.getElementById("room_type").value.trim(),
-    check_in: document.getElementById("check_in").value,
-    check_out: document.getElementById("check_out").value
-  };
+  const data = JSON.parse(stored);
+
+  status.textContent = "Submitting payment...";
 
   try {
     const res = await fetch(
@@ -67,27 +59,36 @@ form.addEventListener("submit", async (e) => {
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          room: data.room,
+          roomNumber: data.number,
+          checkin: data.checkin,
+          checkout: data.checkout,
+          totalAmount: data.totalAmount,
+          paymentMethod: method,
+          transactionId: txn || null
+        })
       }
     );
 
-    if (!res.ok) {
-      throw new Error("Server error");
+    const result = await res.json();
+
+    if (!res.ok || !result.success) {
+      throw new Error("Server rejected request");
     }
 
-    await res.json();
-
-    statusText.textContent = "Payment submitted successfully!";
-    statusText.style.color = "green";
-    form.reset();
+    status.textContent = "✅ Payment successful";
+    status.className = "success";
 
   } catch (err) {
     console.error(err);
-    statusText.textContent = "Payment failed. Please try again.";
-    statusText.style.color = "red";
+    status.textContent = "❌ Payment failed";
+    status.className = "error";
   }
-});
+}
 </script>
-
 </body>
 </html>
