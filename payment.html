@@ -144,208 +144,83 @@ Account No: <b>123456789</b><br><br>
 
 </div>
 
-<script>
-/* ================= LOAD BOOKING DATA ================= */
-let stored = sessionStorage.getItem("bookingData");
-if (!stored) {
-  const qp = Object.fromEntries(new URL(location.href).searchParams.entries());
-  if (Object.keys(qp).length) {
-    stored = JSON.stringify(qp);
-    sessionStorage.setItem('bookingData', stored);
-  }
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Payment Page</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body>
 
-if (!stored) {
-  alert("Booking session expired. Please book again.");
-  location.href = "booking.html";
-  throw new Error("No bookingData in sessionStorage");
-}
+  <h2>Hotel Booking Payment</h2>
 
-const data = JSON.parse(stored);
+  <form id="paymentForm">
+    <input type="text" id="name" placeholder="Full Name" required /><br><br>
+    <input type="email" id="email" placeholder="Email" required /><br><br>
+    <input type="text" id="room_type" placeholder="Room Type" required /><br><br>
+    <input type="date" id="check_in" required /><br><br>
+    <input type="date" id="check_out" required /><br><br>
 
-/* ================= ELEMENT REFERENCES ================= */
-const r_name     = document.getElementById("r_name");
-const r_email    = document.getElementById("r_email");
-const r_phone    = document.getElementById("r_phone");
-const r_room     = document.getElementById("r_room");
-const r_checkin  = document.getElementById("r_checkin");
-const r_checkout = document.getElementById("r_checkout");
-const r_total    = document.getElementById("r_total");
+    <button type="submit">Pay Now</button>
+  </form>
 
-const method   = document.getElementById("method");
-const bank     = document.getElementById("bank");
-const afri     = document.getElementById("afri");
-const orange   = document.getElementById("orange");
-const qmoney   = document.getElementById("qmoney");
+  <p id="status"></p>
 
-const bankReceipt = document.getElementById("bankReceipt");
-const afriTxn     = document.getElementById("afriTxn");
-const orangeTxn   = document.getElementById("orangeTxn");
-const qmoneyTxn   = document.getElementById("qmoneyTxn");
+  <script>
+    const form = document.getElementById("paymentForm");
+    const statusText = document.getElementById("status");
 
-const status  = document.getElementById("status");
-const payBtn  = document.getElementById("payBtn");
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault(); // STOP page reload
 
-const DEFAULT_PAY_BTN_TEXT = payBtn ? payBtn.textContent : "Confirm & Send Payment";
+      statusText.textContent = "Processing payment...";
 
-/* ================= FILL RECEIPT ================= */
-r_name.textContent     = data.name     || "";
-r_email.textContent    = data.email    || "";
-r_phone.textContent    = data.phone    || "";
-r_room.textContent     = `${data.room || ""} (${data.number || ""})`;
-r_checkin.textContent  = data.checkin  || "";
-r_checkout.textContent = data.checkout || "—";
-r_total.textContent    = data.totalAmount
-  ? Number(data.totalAmount).toFixed(2)
-  : "0.00";
+      // Collect values
+      const payload = {
+        name: document.getElementById("name").value.trim(),
+        email: document.getElementById("email").value.trim(),
+        room_type: document.getElementById("room_type").value.trim(),
+        check_in: document.getElementById("check_in").value,
+        check_out: document.getElementById("check_out").value
+      };
 
-/* ================= PAYMENT METHOD SWITCH ================= */
-method.addEventListener("change", () => {
-  bank.classList.add("hidden");
-  afri.classList.add("hidden");
-  orange.classList.add("hidden");
-  qmoney.classList.add("hidden");
+      try {
+        const response = await fetch(
+          "https://macbookair.remshotelgroupsix.workers.dev/api/booking",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+          }
+        );
 
-  if (method.value === "bank")      bank.classList.remove("hidden");
-  if (method.value === "afrimoney") afri.classList.remove("hidden");
-  if (method.value === "orange")    orange.classList.remove("hidden");
-  if (method.value === "qmoney")    qmoney.classList.remove("hidden");
-});
+        // If backend returns error status
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(errorText || "Server error");
+        }
 
-/* ================= PAYMENT SUBMIT ================= */
-  async function pay() {
-  if (!method.value) {
-    alert("Select payment method");
-    return;
-  }
+        // Parse JSON safely
+        const result = await response.json();
 
-  payBtn.disabled = true;
-  payBtn.textContent = "Submitting...";
+        console.log("SUCCESS:", result);
+        statusText.textContent = "Payment successful!";
+        statusText.style.color = "green";
 
-  data.paymentMethod = method.value;
+        form.reset();
 
-  /* ---- validate inputs per method ---- */
-  if (method.value === "bank") {
-    if (!bankReceipt || !bankReceipt.files || !bankReceipt.files[0]) {
-      alert("Upload bank receipt");
-      restoreButton();
-      return;
-    }
-    const file = bankReceipt.files[0];
-    if (file.size > 5 * 1024 * 1024) {
-      alert("Receipt file must be 5MB or smaller.");
-      restoreButton();
-      return;
-    }
-    const allowed = ["image/png","image/jpeg","application/pdf","image/jpg"];
-    if (!allowed.includes(file.type) && file.type !== "") {
-      alert("Unsupported file type. Use PNG/JPG/PDF.");
-      restoreButton();
-      return;
-    }
-    data.bankReceiptUploaded = true;
-  }
-
-  if (method.value === "afrimoney") {
-    if (!afriTxn || !afriTxn.value || afriTxn.value.trim().length < 3) {
-      alert("Enter a valid Afrimoney Transaction ID");
-      restoreButton();
-      return;
-    }
-    data.transactionId = afriTxn.value.trim();
-  }
-
-  if (method.value === "orange") {
-    if (!orangeTxn || !orangeTxn.value || orangeTxn.value.trim().length < 3) {
-      alert("Enter a valid Orange Money Transaction ID");
-      restoreButton();
-      return;
-    }
-    data.transactionId = orangeTxn.value.trim();
-  }
-
-  if (method.value === "qmoney") {
-    if (!qmoneyTxn || !qmoneyTxn.value || qmoneyTxn.value.trim().length < 3) {
-      alert("Enter a valid QMoney Transaction ID");
-      restoreButton();
-      return;
-    }
-    data.transactionId = qmoneyTxn.value.trim();
-  }
-
- /* ===== SEND TO CLOUDFARE WORKER ===== */
-try {
-  const res = await fetch(
-    "https://macbookair.remshotelgroupsix.workers.dev/api/booking",
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
-        room: data.room,
-        roomNumber: data.number,
-        checkin: data.checkin,
-        checkout: data.checkout,
-        totalAmount: data.totalAmount,
-        paymentMethod: data.paymentMethod,
-        transactionId: data.transactionId || null,
-        bankReceiptUploaded: data.bankReceiptUploaded || false
-      })
-    }
-  );
-
-  const result = await res.json();
-
-  if (!res.ok || !result.success) {
-    throw new Error(result.message || "Payment failed");
-  }
-
-  status.textContent = "✅ Payment submitted successfully!";
-  payBtn.textContent = "Submitted";
-  payBtn.disabled = true;
-
-} catch (err) {
-  console.error(err);
-  alert("Payment failed: " + err.message);
-  restoreButton();
-}
-  
-async function submitPayment() {
-  try {
-    const response = await fetch(
-      "https://macbookair.remshotelgroupsix.workers.dev/api/booking",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          name: "John Doe",
-          email: "john@example.com",
-          room_type: "Deluxe",
-          check_in: "2026-07-01",
-          check_out: "2026-07-05"
-        })
+      } catch (error) {
+        console.error("ERROR:", error);
+        statusText.textContent = "Payment failed: Network or server error";
+        statusText.style.color = "red";
       }
-    );
+    });
+  </script>
 
-    // handle non-200 responses
-    if (!response.ok) {
-      const text = await response.text();
-      throw new Error(text || "Server error");
-    }
-
-    const data = await response.json();
-    console.log("SUCCESS:", data);
-    alert("Payment sent successfully!");
-
-  } catch (error) {
-    console.error("NETWORK ERROR:", error);
-    alert("Payment failed: Network error");
-  }
-}
-</script>
+</body>
+</html>
 </body>
 </html>
