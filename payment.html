@@ -1,114 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Payment | REMS HOTEL</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body { font-family: Arial; background:#f4f6f8; padding:20px }
+.container { max-width:600px; margin:auto; background:#fff; padding:20px; border-radius:8px }
+button, select, input { width:100%; padding:10px; margin-top:10px }
+.success { color:green }
+.error { color:red }
+</style>
+</head>
+
+<body>
+<div class="container">
+  <h2>Confirm Payment</h2>
+
+  <select id="method">
+    <option value="">Select payment method</option>
+    <option value="bank">Bank</option>
+    <option value="afrimoney">Afrimoney</option>
+    <option value="orange">Orange Money</option>
+    <option value="qmoney">QMoney</option>
+  </select>
+
+  <input id="txn" placeholder="Transaction ID" />
+
+  <button id="payBtn">Send Payment</button>
+
+  <p id="status"></p>
+</div>
+
 <script>
-/* ================= LOAD BOOKING DATA ================= */
-const stored = sessionStorage.getItem("bookingData");
-if (!stored) {
-  alert("Booking session expired. Please book again.");
-  location.href = "booking.html";
-  throw new Error("No bookingData");
-}
-const data = JSON.parse(stored);
+(function () {
+  "use strict";
 
-/* ================= ELEMENTS ================= */
-const method = document.getElementById("method");
-const bank = document.getElementById("bank");
-const afri = document.getElementById("afri");
-const orange = document.getElementById("orange");
-const qmoney = document.getElementById("qmoney");
+  const status = document.getElementById("status");
+  const methodEl = document.getElementById("method");
+  const txnEl = document.getElementById("txn");
+  const payBtn = document.getElementById("payBtn");
 
-const bankReceipt = document.getElementById("bankReceipt");
-const afriTxn = document.getElementById("afriTxn");
-const orangeTxn = document.getElementById("orangeTxn");
-const qmoneyTxn = document.getElementById("qmoneyTxn");
+  payBtn.addEventListener("click", pay);
 
-const status = document.getElementById("status");
-const payBtn = document.getElementById("payBtn");
+  async function pay() {
+    status.textContent = "";
+    status.className = "";
 
-/* ================= SWITCH PAYMENT UI ================= */
-method.addEventListener("change", () => {
-  bank.classList.add("hidden");
-  afri.classList.add("hidden");
-  orange.classList.add("hidden");
-  qmoney.classList.add("hidden");
-
-  if (method.value === "bank") bank.classList.remove("hidden");
-  if (method.value === "afrimoney") afri.classList.remove("hidden");
-  if (method.value === "orange") orange.classList.remove("hidden");
-  if (method.value === "qmoney") qmoney.classList.remove("hidden");
-});
-
-/* ================= PAYMENT SUBMIT ================= */
-async function pay() {
-  if (!method.value) {
-    alert("Select payment method");
-    return;
-  }
-
-  payBtn.disabled = true;
-  payBtn.textContent = "Submitting...";
-  status.textContent = "";
-
-  let transactionId = null;
-
-  if (method.value === "afrimoney") {
-    if (!afriTxn.value.trim()) return fail("Enter Afrimoney Transaction ID");
-    transactionId = afriTxn.value.trim();
-  }
-
-  if (method.value === "orange") {
-    if (!orangeTxn.value.trim()) return fail("Enter Orange Money Transaction ID");
-    transactionId = orangeTxn.value.trim();
-  }
-
-  if (method.value === "qmoney") {
-    if (!qmoneyTxn.value.trim()) return fail("Enter QMoney Transaction ID");
-    transactionId = qmoneyTxn.value.trim();
-  }
-
-  try {
-    const response = await fetch(
-      "https://macbookair.remshotelgroupsix.workers.dev/api/booking",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: data.name,
-          email: data.email,
-          phone: data.phone,
-          room: data.room,
-          roomNumber: data.number,
-          checkin: data.checkin,
-          checkout: data.checkout,
-          totalAmount: data.totalAmount,
-          paymentMethod: method.value,
-          transactionId
-        })
-      }
-    );
-
-    if (!response.ok) {
-      const text = await response.text();
-      throw new Error(text || "Server error");
+    if (!methodEl.value) {
+      alert("Select payment method");
+      return;
     }
 
-    const result = await response.json();
+    const stored = sessionStorage.getItem("bookingData");
+    if (!stored) {
+      alert("Booking session expired. Please book again.");
+      location.href = "booking.html";
+      return;
+    }
 
-    status.textContent = "✅ Payment submitted successfully";
-    status.className = "success";
-    payBtn.textContent = "Submitted";
+    const booking = JSON.parse(stored);
+    const transactionId = txnEl.value.trim() || null;
 
-    sessionStorage.removeItem("bookingData");
+    payBtn.disabled = true;
+    payBtn.textContent = "Submitting...";
 
-  } catch (err) {
-    console.error(err);
-    fail("Payment failed: Network or server error");
+    try {
+      const response = await fetch(
+        "https://macbookair.remshotelgroupsix.workers.dev/api/booking",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            room: booking.room,
+            number: booking.number,
+            duration: booking.duration,
+            totalAmount: booking.totalAmount,
+            paymentMethod: methodEl.value,
+            transactionId
+          })
+        }
+      );
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || "Server error");
+      }
+
+      await response.json();
+
+      status.textContent = "✅ Payment submitted successfully";
+      status.className = "success";
+      payBtn.textContent = "Submitted";
+
+      sessionStorage.removeItem("bookingData");
+
+    } catch (err) {
+      console.error(err);
+      status.textContent = "❌ Payment failed";
+      status.className = "error";
+      payBtn.disabled = false;
+      payBtn.textContent = "Send Payment";
+      alert("Payment failed: " + err.message);
+    }
   }
-}
-
-/* ================= HELPERS ================= */
-function fail(msg) {
-  alert(msg);
-  status.textContent = "❌ " + msg;
-  payBtn.disabled = false;
-  payBtn.textContent = "Confirm & Send Payment";
-}
+})();
 </script>
+</body>
+</html>
